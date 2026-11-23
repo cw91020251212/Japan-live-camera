@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Camera · 三個方案</title>
+<style>
+  :root {
+    --ink: #1b242c;
+    --muted: #5d6b78;
+    --line: #d5ddd8;
+    --paper: #f3f1eb;
+    --card: #fffdf8;
+    --sea: #c5d7e2;
+    --land: #e6efe4;
+    --edge: #b7c4b4;
+    --photo: #c56a32;
+    --video: #1d4e89;
+    --link: #1f7a4d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+  }
+  .intro {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 28px 20px 8px;
+  }
+  h1 { font-size: 28px; margin: 0 0 8px; }
+  .intro p { margin: 0; color: var(--muted); line-height: 1.6; }
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    gap: 8px;
+    padding: 12px 20px;
+    background: rgba(243,241,235,0.94);
+    border-bottom: 1px solid var(--line);
+  }
+  nav button, button {
+    font: inherit;
+    cursor: pointer;
+  }
+  nav button {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: 999px;
+    padding: 8px 14px;
+  }
+  nav button[aria-pressed="true"] {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 20px; }
+  section { display: none; }
+  section.active { display: block; }
+  .why { font-size: 15px; line-height: 1.65; margin: 0 0 14px; }
+  .frame {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+    min-height: 620px;
+    position: relative;
+  }
+  .map {
+    position: relative;
+    background: var(--sea);
+    height: 460px;
+  }
+  .map svg { width: 100%; height: 100%; display: block; }
+  .float {
+    position: absolute;
+    z-index: 2;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .float.top { top: 12px; left: 12px; right: 12px; }
+  .brand {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 8px 10px;
+    line-height: 1.2;
+  }
+  .brand b { display: block; font-size: 14px; }
+  .brand span { color: var(--muted); font-size: 12px; }
+  .seg {
+    margin-left: auto;
+    display: flex;
+    background: var(--card);
+    border-radius: 999px;
+    padding: 4px;
+    gap: 2px;
+  }
+  .seg button, .ghost {
+    border: 0;
+    background: transparent;
+    border-radius: 999px;
+    padding: 6px 10px;
+    color: var(--ink);
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .ghost {
+    background: var(--card);
+    border: 1px solid var(--line);
+  }
+  .ghost[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .bubble, .pin {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border: 0;
+    background: var(--card);
+    color: var(--ink);
+  }
+  .bubble {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.1;
+  }
+  .bubble b { font-size: 16px; }
+  .bubble span { font-size: 10px; color: var(--muted); }
+  .pin {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    padding: 0;
+  }
+  .pin.image { background: var(--photo); }
+  .pin.video { background: var(--video); border-radius: 3px; }
+  .pin.link { background: var(--link); border-radius: 2px; transform: translate(-50%, -50%) rotate(45deg); }
+  .pin[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .sheet {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: 148px 1fr;
+    gap: 12px;
+  }
+  .sheet.compact { grid-template-columns: 1fr auto; align-items: center; }
+  .scene {
+    border-radius: 10px;
+    min-height: 96px;
+    background:
+      linear-gradient(#d7e4ef, #d7e4ef) top / 100% 46% no-repeat,
+      linear-gradient(#8ea0b0, #8ea0b0) bottom / 100% 54% no-repeat;
+  }
+  .scene.fuji {
+    background:
+      linear-gradient(#d5e4f2, #d5e4f2) 0 0 / 100% 42% no-repeat,
+      linear-gradient(135deg, transparent 42%, #f7f7f5 42% 58%, transparent 58%) center / 80% 70% no-repeat,
+      linear-gradient(#7f93a3, #7f93a3);
+  }
+  .scene.kyoto {
+    background: linear-gradient(#e7d7c4, #c46a32);
+  }
+  .scene.video {
+    background: #1b242c;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+  }
+  .sheet h2 { margin: 0 0 4px; font-size: 20px; }
+  .meta { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+  .go {
+    margin-top: 10px;
+    border: 0;
+    background: var(--link);
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+  .regions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 14px;
+  }
+  .region {
+    text-align: left;
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: 14px;
+    overflow: hidden;
+    padding: 0;
+  }
+  .region .band { height: 72px; }
+  .region .body { padding: 10px 12px 12px; }
+  .region h3 { margin: 0 0 4px; font-size: 18px; }
+  .region p { margin: 0; color: var(--muted); font-size: 13px; }
+  .back {
+    border: 0;
+    background: transparent;
+    color: var(--video);
+    padding: 12px 14px 0;
+  }
+  .split { display: grid; grid-template-columns: 1.1fr 0.9fr; min-height: 620px; }
+  .list { padding: 8px 12px 16px; }
+  .row {
+    width: 100%;
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    padding: 12px 4px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .row[aria-pressed="true"] { background: #eef4f0; }
+  .row small { color: var(--muted); display: block; }
+  .feed { border-top: 1px solid var(--line); padding: 12px; display: grid; gap: 10px; }
+  .shot {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: 12px;
+    padding: 8px;
+  }
+  .shot[aria-pressed="true"] { border-color: var(--ink); }
+  .door {
+    width: 100%;
+    text-align: left;
+    border: 1px dashed var(--edge);
+    background: #f7faf8;
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .label {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 4px 0;
+  }
+  @media (max-width: 720px) {
+    .sheet, .split, .shot { grid-template-columns: 1fr; }
+    .regions { grid-template-columns: 1fr; }
+    .float.top { flex-wrap: wrap; }
+    .seg { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="intro">
+  <h1>三個睇法</h1>
+  <p>我建議用方案 B 做第一眼，入去一個地方之後用方案 A。有畫面嘅先至大張顯示。官方連結收成一行門，唔好變成一塊空面板。全國先見數字，唔好一次過鋪晒幾百個點。</p>
+</div>
+<nav>
+  <button data-tab="a" aria-pressed="true">A 全屏地圖</button>
+  <button data-tab="b" aria-pressed="false">B 先揀地方</button>
+  <button data-tab="c" aria-pressed="false">C 即時牆</button>
+</nav>
+<main>
+  <section id="a" class="active">
+    <p class="why">地圖佔滿個畫面。全國先見每個地方有幾多支。入去東北之後，先見到個別鏡頭。冇畫面嘅，下面只留一行同「前往官方頁面」。</p>
+    <div class="frame" id="frame-a"></div>
+  </section>
+  <section id="b">
+    <p class="why">第一眼唔係一幅空地圖。八個地方各有一張環境，同埋「有畫面」同「官方入口」分開數。揀咗地方先入地圖。</p>
+    <div class="frame" id="frame-b"></div>
+  </section>
+  <section id="c">
+    <p class="why">上面係地圖，下面係而家呢個範圍睇到嘅畫面。有相片、有影片先至出大卡。官方入口分開，排喺下面，一眼知道要離開本站。</p>
+    <div class="frame" id="frame-c"></div>
+  </section>
+</main>
+<script>
+const japan = `
+<svg viewBox="0 0 300 430" aria-hidden="true">
+  <rect width="300" height="430" fill="#c5d7e2"/>
+  <g fill="#e6efe4" stroke="#b7c4b4" stroke-width="1.5">
+    <path d="M176 36c20-12 46-4 54 16 8 18 0 36-16 44-12 6-18 2-22-6-14 12-34 8-42-8-8-14 0-32 12-38 6-6 10-6 14-8z"/>
+    <path d="M148 102c24-18 54-10 68 14 12 20 12 44 2 64 10 12 14 28 4 42-12 18-8 36-24 46-18 12-34 6-42-8-10 16-30 22-46 12-18-12-22-32-10-48-14-6-26-20-24-36 2-22 16-38 34-44 6-18 16-40 38-42z"/>
+    <path d="M112 286c18-4 32 8 34 22 2 12-6 22-18 24-14 2-26-6-28-18-2-10 4-24 12-28z"/>
+    <path d="M72 308c16-14 38-6 44 12 6 16-2 34-18 40-16 6-34-2-38-18-4-14 2-28 12-34z"/>
+  </g>
+</svg>`;
+
+const cameras = {
+  namioka: { kind: "image", name: "浪岡IC", place: "浪岡IC", meta: "青森縣 · 道路 · 約 60 秒刷新" },
+  tohoku: { kind: "link", name: "E4 東北道", place: "東北道", meta: "青森縣、岩手縣、宮城縣 · NEXCO東日本" },
+  fuji: { kind: "video", name: "富士山", place: "富士山", meta: "山梨縣 · 觀光 · 允許嵌入" },
+  kyoto: { kind: "image", name: "京都站", place: "京都駅", meta: "京都府 · 觀光 · 約 60 秒刷新" },
+  river: { kind: "link", name: "東北河川相機", place: "川の防災情報", meta: "東北 · 天氣災害 · 國土交通省" }
+};
+
+const regions = [
+  ["北海道", "18 有畫面 · 2 官方入口", "#d5e0ea"],
+  ["東北", "24 有畫面 · 6 官方入口", "#d7e3d4"],
+  ["關東", "41 有畫面 · 5 官方入口", "#e7dcc8"],
+  ["中部", "22 有畫面 · 4 官方入口", "#d5e4ef"],
+  ["關西", "19 有畫面 · 3 官方入口", "#ead7c8"],
+  ["中國", "11 有畫面 · 2 官方入口", "#dce6d8"],
+  ["四國", "7 有畫面 · 1 官方入口", "#e4e7d4"],
+  ["九州・沖繩", "16 有畫面 · 2 官方入口", "#d4e3ea"]
+];
+
+let tab = "a";
+let zoom = "country";
+let selected = "tohoku";
+let onlyLive = false;
+let region = null;
+let feed = "fuji";
+
+function sheet(id) {
+  const cam = cameras[id];
+  if (cam.kind === "link") {
+    return `<div class="sheet compact">
+      <div><h2>${cam.name}</h2><p class="meta">${cam.meta}<br>畫面在官方網站觀看。本站不存放影像。</p></div>
+      <button class="go" type="button">前往官方頁面</button>
+    </div>`;
+  }
+  const scene = cam.kind === "video" ? "scene video" : "scene " + (id === "kyoto" ? "kyoto" : "fuji");
+  const caption = cam.kind === "video" ? "影片在此播放" : "";
+  return `<div class="sheet">
+    <div class="${scene}">${caption}</div>
+    <div><h2>${cam.name}</h2><p class="meta">${cam.place}<br>${cam.meta}</p></div>
+  </div>`;
+}
+
+function renderA() {
+  const liveBtn = `<button class="ghost" id="only-live" aria-pressed="${onlyLive}">只看有畫面</button>`;
+  if (zoom === "country") {
+    const bubbles = [
+      ["北海道", 20, 18, 22],
+      ["東北", 30, 46, 34],
+      ["關東", 46, 62, 48],
+      ["中部", 26, 48, 58],
+      ["關西", 22, 40, 70],
+      ["中國", 13, 28, 78],
+      ["四國", 8, 42, 82],
+      ["九州", 18, 24, 90]
+    ].map(([name, n, x, y]) =>
+      `<button class="bubble" data-zoom="${name}" style="left:${x}%;top:${y}%"><b>${n}</b><span>${name}</span></button>`
+    ).join("");
+    document.getElementById("frame-a").innerHTML = `
+      <div class="map">${japan}
+        <div class="float top"><div class="brand"><b>Live Camera</b><span>日本公開鏡頭</span></div>
+        <div class="seg"><button aria-pressed="true">全部</button><button>道路</button><button>觀光</button><button>天氣</button></div></div>
+        ${bubbles}
+      </div>`;
+    return;
+  }
+  const pins = [
+    ["namioka", "image", 38, 28],
+    ["tohoku", "link", 58, 46],
+    ["river", "link", 70, 62]
+  ].filter((pin) => !onlyLive || pin[1] !== "link").map(([id, kind, x, y]) =>
+    `<button class="pin ${kind}" data-cam="${id}" aria-pressed="${selected === id}" aria-label="${cameras[id].name}" style="left:${x}%;top:${y}%"></button>`
+  ).join("");
+  document.getElementById("frame-a").innerHTML = `
+    <div class="map">
+      <svg viewBox="0 0 300 430" aria-hidden="true">
+        <rect width="300" height="430" fill="#d5e6da"/>
+        <path d="M40 40 C 90 80, 70 160, 120 210 S 200 300, 250 390" fill="none" stroke="#8fb0c4" stroke-width="10"/>
+        <path d="M30 120 C 110 140, 140 80, 270 150" fill="none" stroke="#f7f4ea" stroke-width="8"/>
+        <text x="36" y="110" fill="#5d6b78" font-size="14">青森</text>
+        <text x="150" y="250" fill="#5d6b78" font-size="14">盛岡</text>
+        <text x="200" y="340" fill="#5d6b78" font-size="14">仙台</text>
+      </svg>
+      <div class="float top">
+        <button class="ghost" id="back-japan" type="button">全日本</button>
+        <div class="brand"><b>東北</b><span>平面地圖 · 立體環境稍後</span></div>
+        ${liveBtn}
+      </div>
+      ${pins}
+      ${sheet(selected)}
+    </div>`;
+}
+
+function renderB() {
+  const root = document.getElementById("frame-b");
+  if (!region) {
+    root.innerHTML = `<div class="regions">${regions.map(([name, count, color]) =>
+      `<button class="region" data-region="${name}"><div class="band" style="background:${color}"></div><div class="body"><h3>${name}</h3><p>${count}</p></div></button>`
+    ).join("")}</div>`;
+    return;
+  }
+  root.innerHTML = `
+    <button class="back" id="regions" type="button">全部地方</button>
+    <div class="split">
+      <div class="map" style="height:auto">${japan}</div>
+      <div class="list">
+        <p class="label">${region}</p>
+        <button class="row" data-cam="namioka"><span>浪岡IC<small>相片 · 青森縣</small></span><span>看畫面</span></button>
+        <button class="row" data-cam="tohoku"><span>E4 東北道<small>官方入口 · 唔經本站</small></span><span>前往</span></button>
+        <button class="row"><span>東北河川相機<small>官方入口 · 川の防災情報</small></span><span>前往</span></button>
+      </div>
+    </div>`;
+}
+
+function renderC() {
+  document.getElementById("frame-c").innerHTML = `
+    <div class="map" style="height:250px">${japan}
+      <div class="float top"><div class="brand"><b>Live Camera</b><span>呢個範圍</span></div></div>
+    </div>
+    <div class="feed">
+      <p class="label">有畫面</p>
+      <button class="shot" data-feed="fuji" aria-pressed="${feed === "fuji"}"><div class="scene fuji"></div><div><b>富士山</b><p class="meta">影片 · 山梨縣</p></div></button>
+      <button class="shot" data-feed="kyoto" aria-pressed="${feed === "kyoto"}"><div class="scene kyoto"></div><div><b>京都站</b><p class="meta">相片 · 京都府 · 京都駅</p></div></button>
+      <p class="label">官方入口</p>
+      <button class="door" type="button"><b>E4 東北道</b><p class="meta">前往ドラぷら。畫面不經本站。</p></button>
+      <button class="door" type="button"><b>東北河川相機</b><p class="meta">前往川の防災情報。</p></button>
+    </div>`;
+}
+
+function render() {
+  document.querySelectorAll("nav button").forEach((btn) => btn.setAttribute("aria-pressed", btn.dataset.tab === tab ? "true" : "false"));
+  document.querySelectorAll("main section").forEach((sec) => sec.classList.toggle("active", sec.id === tab));
+  if (tab === "a") renderA();
+  if (tab === "b") renderB();
+  if (tab === "c") renderC();
+}
+
+document.body.addEventListener("click", (event) => {
+  const btn = event.target.closest("button");
+  if (!btn) return;
+  if (btn.dataset.tab) tab = btn.dataset.tab;
+  if (btn.dataset.zoom) { zoom = "region"; selected = "tohoku"; }
+  if (btn.id === "back-japan") zoom = "country";
+  if (btn.id === "only-live") onlyLive = !onlyLive;
+  if (btn.dataset.cam && tab === "a") selected = btn.dataset.cam;
+  if (btn.dataset.region) region = btn.dataset.region;
+  if (btn.id === "regions") region = null;
+  if (btn.dataset.feed) feed = btn.dataset.feed;
+  render();
+});
+render();
+</script>
+</body>
+</html>
