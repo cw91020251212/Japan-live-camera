@@ -34,11 +34,15 @@ const door: OfficialDoor = {
 const state: ViewState = { category: "all", imagesOnly: false, selectedId: null };
 
 describe("viewModel", () => {
-  it("shows the region grid on the home route", () => {
+  it("opens on a map of Japan with one marker per region", () => {
     const view = viewModel({ cameras: [photo], doors: [door] }, "#/", state);
+    expect(view.kind).toBe("home");
     expect(view.title).toBe("日本公開鏡頭");
-    expect(view.html).toContain("東北");
-    expect(view.bounds).toBeNull();
+    expect(view.html).toContain('data-view="home"');
+    expect(view.html).not.toContain("region-card");
+    expect(view.bounds).toEqual([122.9, 24.0, 146.0, 45.6]);
+    expect(view.markers.map((marker) => marker.label)).toContain("東北");
+    expect(view.markers.find((marker) => marker.id === "tohoku")?.live).toBe(1);
     expect(view.points).toEqual([]);
   });
 

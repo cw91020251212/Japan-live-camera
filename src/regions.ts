@@ -102,8 +102,25 @@ export function prefectureZh(prefectureJa: string): string | null {
   return BY_JA.get(prefectureJa)?.zh ?? null;
 }
 
+export const JAPAN_BOUNDS: [number, number, number, number] = [122.9, 24.0, 146.0, 45.6];
+
+const REGION_ANCHORS: Record<RegionId, [number, number]> = {
+  hokkaido: [142.8, 43.5],
+  tohoku: [140.7, 39.4],
+  kanto: [139.75, 35.75],
+  chubu: [137.2, 36.2],
+  kansai: [135.5, 34.7],
+  chugoku: [132.6, 34.6],
+  shikoku: [133.6, 33.6],
+  kyushu: [130.8, 32.4],
+};
+
 export function regionBounds(id: RegionId): [number, number, number, number] {
   return BOUNDS[id];
+}
+
+export function regionAnchor(id: RegionId): [number, number] {
+  return REGION_ANCHORS[id];
 }
 
 export function parseRoute(hash: string): Route {

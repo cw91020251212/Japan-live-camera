@@ -2,7 +2,7 @@ import maplibregl, { type GeoJSONSource, type Map } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Camera } from "./classify";
 import type { Catalog } from "./catalog";
-import { viewModel, type ViewState } from "./view";
+import { viewModel, type RegionMarker, type ViewState } from "./view";
 import "./style.css";
 
 let catalog: Catalog = { cameras: [], doors: [] };
@@ -46,6 +46,37 @@ function armRefresh(): void {
 function destroyMap(): void {
   map?.remove();
   map = null;
+}
+
+function bindRegionMap(bounds: [number, number, number, number], markers: RegionMarker[]): void {
+  destroyMap();
+  const container = document.querySelector<HTMLElement>("#map");
+  if (!container) return;
+  map = new maplibregl.Map({
+    container,
+    style: "https://tiles.openfreemap.org/styles/liberty",
+    bounds: [
+      [bounds[0], bounds[1]],
+      [bounds[2], bounds[3]],
+    ],
+    fitBoundsOptions: { padding: 36 },
+  });
+  map.addControl(new maplibregl.NavigationControl(), "top-right");
+  map.on("load", () => {
+    if (!map) return;
+    for (const marker of markers) {
+      const link = document.createElement("a");
+      link.className = "region-pin";
+      link.href = `#/${marker.id}`;
+      link.setAttribute("aria-label", `${marker.label} ${marker.live}`);
+      const count = document.createElement("strong");
+      count.textContent = String(marker.live);
+      const name = document.createElement("span");
+      name.textContent = marker.label;
+      link.append(count, name);
+      new maplibregl.Marker({ element: link, anchor: "center" }).setLngLat([marker.longitude, marker.latitude]).addTo(map);
+    }
+  });
 }
 
 function bindMap(bounds: [number, number, number, number], points: Camera[]): void {
@@ -144,7 +175,8 @@ function draw(): void {
   const view = viewModel(catalog, location.hash || "#/", state);
   document.title = `Live Camera · ${view.title}`;
   const root = appRoot();
-  const sameMap = map && view.bounds && root.querySelector("#map");
+  const current = root.querySelector("[data-view]")?.getAttribute("data-view");
+  const sameMap = Boolean(map && view.kind === "region" && current === "region" && view.bounds && root.querySelector("#map"));
   if (sameMap) {
     const sheet = root.querySelector("[data-sheet]");
     const doors = root.querySelector("[data-doors]");
@@ -162,7 +194,8 @@ function draw(): void {
   } else {
     destroyMap();
     root.innerHTML = view.html;
-    if (view.bounds) bindMap(view.bounds, view.points);
+    if (view.bounds && view.kind === "home") bindRegionMap(view.bounds, view.markers);
+    else if (view.bounds) bindMap(view.bounds, view.points);
     root.querySelectorAll<HTMLButtonElement>("[data-category]").forEach((button) => {
       button.addEventListener("click", () => {
         const category = button.dataset.category;

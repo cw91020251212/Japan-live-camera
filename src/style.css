@@ -35,6 +35,35 @@ button[aria-pressed="true"] {
   padding: 8px 16px;
 }
 
+.region-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: #1b242c;
+}
+
+.region-pin strong {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #1b242c;
+  color: #f3f1eb;
+  border: 2px solid #f3f1eb;
+  font-size: 16px;
+}
+
+.region-pin span {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgb(243 241 235 / 94%);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
 .home { padding: 24px 16px 16px; }
 
 .subtitle { margin: 4px 0 16px; }

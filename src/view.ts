@@ -1,23 +1,44 @@
 import type { Camera } from "./classify";
 import type { Catalog } from "./catalog";
 import { doorsFor, filterCameras, regionCounts, type FilterQuery } from "./select";
-import { parseRoute, regionBounds, REGIONS } from "./regions";
-import { renderDoors, renderHome, renderSheet } from "./render";
+import { JAPAN_BOUNDS, parseRoute, regionAnchor, regionBounds, REGIONS } from "./regions";
+import { renderDoors, renderSheet } from "./render";
 
 export type ViewState = { category: "all" | "road" | "tourism" | "weather"; imagesOnly: boolean; selectedId: string | null };
+
+export type RegionMarker = {
+  id: string;
+  label: string;
+  longitude: number;
+  latitude: number;
+  live: number;
+};
 
 export function viewModel(
   catalog: Catalog,
   hash: string,
   state: ViewState,
-): { title: string; html: string; bounds: [number, number, number, number] | null; points: Camera[] } {
+): {
+  kind: "home" | "region";
+  title: string;
+  html: string;
+  bounds: [number, number, number, number] | null;
+  points: Camera[];
+  markers: RegionMarker[];
+} {
   const route = parseRoute(hash);
   if (route.name === "home") {
+    const markers = regionCounts(catalog.cameras, catalog.doors).map((count) => {
+      const [longitude, latitude] = regionAnchor(count.id);
+      return { id: count.id, label: count.label, longitude, latitude, live: count.live };
+    });
     return {
+      kind: "home",
       title: "日本公開鏡頭",
-      html: renderHome(regionCounts(catalog.cameras, catalog.doors)),
-      bounds: null,
+      html: `<section class="region" data-view="home"><div class="bar"><h1>Live Camera</h1></div><div id="map"></div></section>`,
+      bounds: JAPAN_BOUNDS,
       points: [],
+      markers,
     };
   }
 
@@ -46,5 +67,5 @@ export function viewModel(
     </div>
   </section>`;
 
-  return { title: label, html, bounds: regionBounds(route.regionId), points };
+  return { kind: "region", title: label, html, bounds: regionBounds(route.regionId), points, markers: [] };
 }
