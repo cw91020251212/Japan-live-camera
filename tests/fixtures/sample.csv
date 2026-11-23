@@ -1,0 +1,3 @@
+stream_title,stream_url,stream_status,stream_type,category,poi,provider,provider_url,address,latitude,longitude
+浪岡IC,https://example.jp/a.jpg,TRUE,image,道路,浪岡IC,公開目錄,https://example.jp,青森県青森市,40.71,140.57
+壞鏡頭,https://example.jp/dead.jpg,FALSE,image,道路,壞,公開目錄,https://example.jp,青森県青森市,40.72,140.58

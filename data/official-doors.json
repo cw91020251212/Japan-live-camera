@@ -1,0 +1,52 @@
+[
+  {
+    "id": "tohoku-road",
+    "name": "ドラぷら東北",
+    "regionId": "tohoku",
+    "category": "road",
+    "provider": "NEXCO東日本",
+    "pageUrl": "https://www.driveplaza.com/traffic/camera/tohoku.html",
+    "note": "東北高速道路",
+    "hidden": false
+  },
+  {
+    "id": "kanto-road",
+    "name": "ドラぷら關東",
+    "regionId": "kanto",
+    "category": "road",
+    "provider": "NEXCO東日本",
+    "pageUrl": "https://www.driveplaza.com/traffic/camera/kanto.html",
+    "note": "關東高速道路",
+    "hidden": false
+  },
+  {
+    "id": "hokkaido-road-index",
+    "name": "ドラぷら索引",
+    "regionId": "hokkaido",
+    "category": "road",
+    "provider": "NEXCO東日本",
+    "pageUrl": "https://www.driveplaza.com/traffic/camera/",
+    "note": "北海道由索引進入",
+    "hidden": false
+  },
+  {
+    "id": "shinetsu-road-index",
+    "name": "ドラぷら索引",
+    "regionId": "chubu",
+    "category": "road",
+    "provider": "NEXCO東日本",
+    "pageUrl": "https://www.driveplaza.com/traffic/camera/",
+    "note": "信越由索引進入",
+    "hidden": false
+  },
+  {
+    "id": "river-national",
+    "name": "川の防災情報",
+    "regionId": "all",
+    "category": "weather",
+    "provider": "國土交通省",
+    "pageUrl": "https://www.river.go.jp/",
+    "note": "全國河川入口",
+    "hidden": false
+  }
+]
