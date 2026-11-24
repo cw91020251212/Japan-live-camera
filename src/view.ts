@@ -2,7 +2,7 @@ import type { Camera } from "./classify";
 import type { Catalog } from "./catalog";
 import { doorsFor, filterCameras, regionCounts, type FilterQuery } from "./select";
 import { JAPAN_BOUNDS, parseRoute, regionAnchor, regionBounds, REGIONS } from "./regions";
-import { renderDoors, renderSheet } from "./render";
+import { escapeHtml, renderDoors, renderSheet } from "./render";
 
 export type ViewState = { category: "all" | "road" | "tourism" | "weather"; imagesOnly: boolean; selectedId: string | null };
 
@@ -62,10 +62,22 @@ export function viewModel(
     </div>
     <div id="map"></div>
     <div class="panel">
-      <div class="sheet" data-sheet>${selected ? renderSheet(selected) : ""}</div>
+      <div class="sheet" data-sheet>${selected ? renderSheet(selected) : ""}${cameraList(points, state.selectedId)}</div>
       <div data-doors>${renderDoors(doors)}</div>
     </div>
   </section>`;
 
   return { kind: "region", title: label, html, bounds: regionBounds(route.regionId), points, markers: [] };
+}
+
+function cameraList(points: Camera[], selectedId: string | null): string {
+  if (points.length === 0) return `<p class="empty">這個範圍沒有符合的鏡頭。</p>`;
+  const items = points
+    .map((camera) => {
+      const kind = camera.kind === "link" ? "官方頁" : "有畫面";
+      const pressed = camera.id === selectedId ? "true" : "false";
+      return `<li><button type="button" data-camera-id="${escapeHtml(camera.id)}" aria-pressed="${pressed}"><span class="cam-name">${escapeHtml(camera.name)}</span><span class="cam-meta">${escapeHtml(camera.prefectureZh)} · ${kind}</span></button></li>`;
+    })
+    .join("");
+  return `<p class="list-label">這個地方的鏡頭</p><ul class="camera-list">${items}</ul>`;
 }

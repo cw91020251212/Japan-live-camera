@@ -68,12 +68,14 @@ function bindRegionMap(bounds: [number, number, number, number], markers: Region
       const link = document.createElement("a");
       link.className = "region-pin";
       link.href = `#/${marker.id}`;
-      link.setAttribute("aria-label", `${marker.label} ${marker.live}`);
-      const count = document.createElement("strong");
-      count.textContent = String(marker.live);
+      link.setAttribute("aria-label", `${marker.label}，${marker.live} 個畫面`);
       const name = document.createElement("span");
+      name.className = "pin-name";
       name.textContent = marker.label;
-      link.append(count, name);
+      const count = document.createElement("span");
+      count.className = "pin-count";
+      count.textContent = `${marker.live} 個畫面`;
+      link.append(name, count);
       new maplibregl.Marker({ element: link, anchor: "center" }).setLngLat([marker.longitude, marker.latitude]).addTo(map);
     }
   });
@@ -98,63 +100,24 @@ function bindMap(bounds: [number, number, number, number], points: Camera[]): vo
     map.addSource("cameras", {
       type: "geojson",
       data: pointsData(points),
-      cluster: true,
-      clusterRadius: 50,
-    });
-    map.addLayer({
-      id: "clusters",
-      type: "circle",
-      source: "cameras",
-      filter: ["has", "point_count"],
-      paint: {
-        "circle-color": "#1b242c",
-        "circle-radius": 18,
-      },
-    });
-    map.addLayer({
-      id: "cluster-count",
-      type: "symbol",
-      source: "cameras",
-      filter: ["has", "point_count"],
-      layout: {
-        "text-field": ["get", "point_count_abbreviated"],
-        "text-font": ["Noto Sans Regular"],
-        "text-size": 12,
-      },
-      paint: { "text-color": "#f3f1eb" },
     });
     map.addLayer({
       id: "points",
       type: "circle",
       source: "cameras",
-      filter: ["!", ["has", "point_count"]],
       paint: {
-        "circle-color": "#8c3a2f",
-        "circle-radius": 7,
+        "circle-color": "#243044",
+        "circle-radius": 6,
         "circle-stroke-width": 2,
-        "circle-stroke-color": "#f3f1eb",
+        "circle-stroke-color": "#f7f3ea",
       },
     });
-    map.on("click", "clusters", (event) => {
-      if (!map) return;
-      const feature = event.features?.[0];
-      if (!feature || feature.geometry.type !== "Point") return;
-      map.easeTo({
-        center: feature.geometry.coordinates as [number, number],
-        zoom: map.getZoom() + 2,
-      });
-    });
+    paintSelection();
     map.on("click", "points", (event) => {
       const id = event.features?.[0]?.properties?.id;
       if (typeof id !== "string") return;
       state = { ...state, selectedId: id };
       draw();
-    });
-    map.on("mouseenter", "clusters", () => {
-      if (map) map.getCanvas().style.cursor = "pointer";
-    });
-    map.on("mouseleave", "clusters", () => {
-      if (map) map.getCanvas().style.cursor = "";
     });
     map.on("mouseenter", "points", () => {
       if (map) map.getCanvas().style.cursor = "pointer";
@@ -169,6 +132,27 @@ function updatePoints(points: Camera[]): void {
   const source = map?.getSource("cameras");
   if (!source || source.type !== "geojson") return;
   (source as GeoJSONSource).setData(pointsData(points));
+  paintSelection();
+}
+
+function paintSelection(): void {
+  if (!map?.getLayer("points")) return;
+  const id = state.selectedId ?? "";
+  map.setPaintProperty("points", "circle-color", ["case", ["==", ["get", "id"], id], "#9c3b2e", "#243044"]);
+  map.setPaintProperty("points", "circle-radius", ["case", ["==", ["get", "id"], id], 8, 6]);
+}
+
+function bindCameraButtons(root: HTMLElement): void {
+  root.querySelectorAll<HTMLButtonElement>("[data-camera-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.cameraId ?? null;
+      state = { ...state, selectedId: id };
+      draw();
+      const camera = catalog.cameras.find((item) => item.id === id);
+      if (!camera || !map) return;
+      map.easeTo({ center: [camera.longitude, camera.latitude], zoom: Math.max(map.getZoom(), 8) });
+    });
+  });
 }
 
 function draw(): void {
@@ -191,6 +175,7 @@ function draw(): void {
       if (match) button.setAttribute("aria-pressed", match.getAttribute("aria-pressed") ?? "false");
     });
     updatePoints(view.points);
+    bindCameraButtons(root);
   } else {
     destroyMap();
     root.innerHTML = view.html;
@@ -208,6 +193,7 @@ function draw(): void {
       state = { ...state, imagesOnly: !state.imagesOnly };
       draw();
     });
+    bindCameraButtons(root);
   }
   armRefresh();
 }
