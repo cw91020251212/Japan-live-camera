@@ -4,7 +4,12 @@ import { doorsFor, filterCameras, regionCounts, type FilterQuery } from "./selec
 import { JAPAN_BOUNDS, parseRoute, regionAnchor, regionBounds, REGIONS } from "./regions";
 import { escapeHtml, renderDoors, renderSheet } from "./render";
 
-export type ViewState = { category: "all" | "road" | "tourism" | "weather"; imagesOnly: boolean; selectedId: string | null };
+export type ViewState = {
+  category: "all" | "road" | "tourism" | "weather";
+  imagesOnly: boolean;
+  selectedId: string | null;
+  listOpen: boolean;
+};
 
 export type RegionMarker = {
   id: string;
@@ -57,12 +62,12 @@ export function viewModel(
         <button type="button" data-category="road" aria-pressed="${pressed("road")}">道路</button>
         <button type="button" data-category="tourism" aria-pressed="${pressed("tourism")}">觀光</button>
         <button type="button" data-category="weather" aria-pressed="${pressed("weather")}">天氣災害</button>
-        <button type="button" data-images-only aria-pressed="${state.imagesOnly ? "true" : "false"}">只看有畫面</button>
+        <button type="button" data-images-only aria-pressed="${state.imagesOnly ? "true" : "false"}">不含官方頁</button>
       </div>
     </div>
     <div id="map"></div>
-    <div class="panel">
-      <div class="sheet" data-sheet>${selected ? renderSheet(selected) : ""}${cameraList(points, state.selectedId)}</div>
+    <div class="panel${state.listOpen ? " list-open" : ""}">
+      <div class="sheet" data-sheet>${cameraList(points, state.selectedId, state.listOpen, selected ? renderSheet(selected) : "")}</div>
       <div data-doors>${renderDoors(doors)}</div>
     </div>
   </section>`;
@@ -70,14 +75,27 @@ export function viewModel(
   return { kind: "region", title: label, html, bounds: regionBounds(route.regionId), points, markers: [] };
 }
 
-function cameraList(points: Camera[], selectedId: string | null): string {
-  if (points.length === 0) return `<p class="empty">這個範圍沒有符合的鏡頭。</p>`;
-  const items = points
-    .map((camera) => {
-      const kind = camera.kind === "link" ? "官方頁" : "有畫面";
-      const pressed = camera.id === selectedId ? "true" : "false";
-      return `<li><button type="button" data-camera-id="${escapeHtml(camera.id)}" aria-pressed="${pressed}"><span class="cam-name">${escapeHtml(camera.name)}</span><span class="cam-meta">${escapeHtml(camera.prefectureZh)} · ${kind}</span></button></li>`;
-    })
-    .join("");
-  return `<p class="list-label">這個地方的鏡頭</p><ul class="camera-list">${items}</ul>`;
+function kindLabel(kind: Camera["kind"]): string {
+  if (kind === "image") return "圖片";
+  if (kind === "video") return "YouTube";
+  return "官方頁";
+}
+
+function cameraList(points: Camera[], selectedId: string | null, listOpen: boolean, card: string): string {
+  const legend = `<p class="legend"><span><i class="dot video"></i>YouTube</span><span><i class="dot image"></i>圖片</span><span><i class="dot link"></i>官方頁</span></p>`;
+  const toggle = `<button type="button" class="list-toggle" data-list-toggle aria-expanded="${listOpen ? "true" : "false"}">鏡頭清單 · ${points.length}</button>`;
+  let body = card;
+  if (listOpen) {
+    if (points.length === 0) body = `<p class="empty">這個範圍沒有符合的鏡頭。</p>${card}`;
+    else {
+      const items = points
+        .map((camera) => {
+          const pressed = camera.id === selectedId ? "true" : "false";
+          return `<li><button type="button" data-camera-id="${escapeHtml(camera.id)}" aria-pressed="${pressed}"><span class="cam-name">${escapeHtml(camera.name)}</span><span class="cam-meta">${escapeHtml(camera.prefectureZh)} · ${kindLabel(camera.kind)}</span></button></li>`;
+        })
+        .join("");
+      body = `<p class="list-label">這個地方的鏡頭</p><ul class="camera-list">${items}</ul>${card}`;
+    }
+  }
+  return `${legend}${toggle}<div class="sheet-body">${body}</div>`;
 }

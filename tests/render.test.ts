@@ -33,7 +33,11 @@ describe("render", () => {
   it("renders a photo, a video, and a compact official card", () => {
     expect(renderSheet(photo)).toContain("<img");
     expect(renderSheet(photo)).toContain("京都駅");
-    expect(renderSheet({ ...photo, kind: "video", embedUrl: "https://www.youtube.com/embed/abc" })).toContain("<iframe");
+    const video = renderSheet({ ...photo, kind: "video", embedUrl: "https://www.youtube.com/embed/abc" });
+    expect(video).not.toContain("<iframe");
+    expect(video).toContain("在 YouTube 開啟");
+    expect(video).toContain("這段要在 YouTube 看。");
+    expect(video).toContain('href="https://example.jp/k.jpg"');
     const link = renderSheet({ ...photo, kind: "link", mediaUrl: null, embedUrl: null, name: "E4 東北道" });
     expect(link).toContain("前往官方頁面");
     expect(link).toContain("本站不存放影像");

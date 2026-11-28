@@ -37,7 +37,8 @@ export function renderSheet(camera: Camera): string {
     return `<article class="card image"><img alt="" src="${src}" data-refresh="${camera.refreshSeconds ?? 60}"><h2>${place}</h2><p>${name} · ${prefecture}</p><p>${meta}</p></article>`;
   }
   if (camera.kind === "video" && camera.embedUrl) {
-    return `<article class="card video"><iframe title="${name}" src="${escapeHtml(camera.embedUrl)}" allow="fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe><h2>${place}</h2><p>${prefecture}</p><p>${meta}</p></article>`;
+    const href = escapeHtml(camera.pageUrl);
+    return `<article class="card video"><h2>${place}</h2><p>${prefecture}</p><p>${meta}</p><p>這段要在 YouTube 看。</p><p><a href="${href}" target="_blank" rel="noopener noreferrer">在 YouTube 開啟</a></p></article>`;
   }
   const href = escapeHtml(camera.pageUrl);
   return `<article class="card link"><h2>${name}</h2><p>${prefecture}</p><p>畫面在官方網站觀看。本站不存放影像。</p><p><a href="${href}" target="_blank" rel="noopener noreferrer">前往官方頁面</a></p></article>`;

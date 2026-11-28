@@ -31,7 +31,7 @@ const door: OfficialDoor = {
   note: "全國河川入口",
   hidden: false,
 };
-const state: ViewState = { category: "all", imagesOnly: false, selectedId: null };
+const state: ViewState = { category: "all", imagesOnly: false, selectedId: null, listOpen: false };
 
 describe("viewModel", () => {
   it("opens on a map of Japan with one marker per region", () => {
@@ -50,6 +50,7 @@ describe("viewModel", () => {
     const view = viewModel({ cameras: [photo], doors: [door] }, "#/tohoku", { ...state, selectedId: "p" });
     expect(view.points.map((camera) => camera.id)).toEqual(["p"]);
     expect(view.html).toContain("浪岡IC");
+    expect(view.html).toContain('aria-expanded="false"');
     expect(view.html).toContain("川の防災情報");
     expect(view.bounds).toEqual([139.0, 36.7, 142.1, 41.6]);
   });
